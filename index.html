@@ -78,9 +78,6 @@
         .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
         .quick-btn { padding: 10px 8px; border: 1px solid #3498db; border-radius: 8px; background: white; color: #3498db; font-size: 12px; text-align: center; transition: all 0.3s ease; }
         .quick-btn:active { background: #3498db; color: white; }
-        .save-section { background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; padding: 12px; margin-top: 15px; }
-        .save-btn { background: linear-gradient(135deg, #4caf50, #45a049); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; cursor: pointer; margin-right: 10px; }
-        .history-btn { background: linear-gradient(135deg, #ff9800, #f57c00); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; cursor: pointer; }
         @media (max-width: 480px) {
             .btn-group { grid-template-columns: 1fr; }
             .summary-cards { grid-template-columns: repeat(2, 1fr); }
@@ -128,16 +125,6 @@
                 <button class="quick-btn" onclick="fillExample()">填充示例</button>
                 <button class="quick-btn" onclick="clearHighlights()">清除高亮</button>
             </div>
-
-            <!-- 数据保存功能 -->
-            <div class="save-section">
-                <h3>💾 数据保存功能</h3>
-                <p style="font-size: 0.9em; margin-bottom: 10px; color: #666;">
-                    分析完成后，可以保存结果到本地，方便以后查看
-                </p>
-                <button class="save-btn" onclick="saveToLocal()">保存分析结果</button>
-                <button class="history-btn" onclick="viewHistory()">查看历史记录</button>
-            </div>
         </div>
         
         <div class="content-tabs">
@@ -163,6 +150,10 @@
     </div>
 
     <script>
+        // Supabase 配置 - 自动保存功能
+        const SUPABASE_URL = 'https://hfkuexwjmsuzkfksbgr.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0a3VleHd5aG5zdXprZmtzYmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0Mzk4ODIsImV4cCI6MjA3ODAxNTg4Mn0.AJFg7H9HKSGt45ZEJ9TSkwR02s_4ikIdjilJpEYtLvM';
+
         let currentData = null;
         let highlightedGroups = new Set();
         let currentHighlightedTriple = null;
@@ -177,6 +168,48 @@
                 localStorage.setItem('user_id', userId);
             }
             return userId;
+        }
+
+        // 自动保存到 Supabase
+        async function saveToSupabase(text, groups, analysis) {
+            try {
+                console.log('🔄 开始保存到 Supabase...');
+                
+                const saveData = {
+                    user_id: getUserId(),
+                    input_data: text,
+                    analysis_result: analysis,
+                    total_groups: groups.length,
+                    total_matches: Object.keys(analysis).length,
+                    created_at: new Date().toISOString()
+                };
+                
+                console.log('📦 准备保存的数据:', saveData);
+
+                const response = await fetch(SUPABASE_URL + '/rest/v1/analysis_records', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY,
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify(saveData)
+                });
+                
+                if (response.ok) {
+                    console.log('✅ 分析结果已自动保存到服务器');
+                    return true;
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ 自动保存失败:', response.status, errorText);
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ 自动保存错误:', error);
+                return false;
+            }
         }
 
         // 切换标签页
@@ -238,17 +271,24 @@
             return result;
         }
         
-        // 主分析函数
-        function analyzeNumbers() {
+        // 主分析函数 - 自动保存版本
+        async function analyzeNumbers() {
             const text = document.getElementById('pasteInput').value.trim();
-            if (!text) { alert('请先粘贴号码数据！'); return; }
+            if (!text) { 
+                alert('请先粘贴号码数据！'); 
+                return; 
+            }
             
             const groups = parsePastedData(text);
-            if (groups.length === 0) { alert('未找到有效的号码数据，请检查格式！'); return; }
+            if (groups.length === 0) { 
+                alert('未找到有效的号码数据，请检查格式！'); 
+                return; 
+            }
             
             document.getElementById('analysisResults').innerHTML = '<div class="loading">正在分析数据...</div>';
             
-            setTimeout(() => {
+            // 使用异步等待，确保分析完成后再保存
+            setTimeout(async () => {
                 const analysis = analyzeTriples(groups);
                 currentData = { groups, analysis };
                 originalGroups = groups;
@@ -257,7 +297,17 @@
                 displayAnalysis(groups, analysis);
                 switchTab('analysis');
                 
-                if (navigator.vibrate) { navigator.vibrate(100); }
+                // 自动保存到服务器
+                const saveSuccess = await saveToSupabase(text, groups, analysis);
+                if (saveSuccess) {
+                    console.log('🎉 自动保存完成！');
+                } else {
+                    console.log('⚠️ 自动保存失败，但分析功能正常');
+                }
+                
+                if (navigator.vibrate) { 
+                    navigator.vibrate(100); 
+                }
             }, 100);
         }
         
@@ -469,95 +519,6 @@
             });
         }
         
-        // 保存到本地存储
-        function saveToLocal() {
-            if (!currentData) { alert('请先分析数据！'); return; }
-            
-            const text = document.getElementById('pasteInput').value.trim();
-            if (!text) { alert('没有数据可保存！'); return; }
-            
-            try {
-                const saveData = {
-                    userId: getUserId(),
-                    inputData: text,
-                    analysisResult: currentData.analysis,
-                    totalGroups: currentData.groups.length,
-                    totalMatches: Object.keys(currentData.analysis).length,
-                    maxRepeatLevel: Math.max(...Object.keys(currentData.analysis).map(k => currentData.analysis[k].groups.length), 0),
-                    timestamp: new Date().toISOString()
-                };
-                
-                let history = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-                history.unshift({ id: Date.now(), ...saveData });
-                history = history.slice(0, 50); // 只保留最近50条
-                localStorage.setItem('analysis_history', JSON.stringify(history));
-                
-                alert('分析结果已保存到本地！');
-            } catch (error) {
-                console.error('保存失败:', error);
-                alert('保存失败，请重试');
-            }
-        }
-        
-        // 查看历史记录
-        function viewHistory() {
-            const history = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-            
-            if (history.length === 0) {
-                alert('暂无历史记录');
-                return;
-            }
-            
-            let historyHtml = `
-                <div class="repeat-section">
-                    <div class="section-header"><span>分析历史记录</span><span class="section-badge">${history.length}条记录</span></div>
-                    <div class="repeat-list">
-            `;
-            
-            history.forEach((record, index) => {
-                const date = new Date(record.timestamp || record.id).toLocaleString();
-                historyHtml += `
-                    <div class="repeat-item">
-                        <div class="triple-info">
-                            <div class="triple-badge level-2">记录 ${index + 1}</div>
-                            <div class="repeat-count">${date}</div>
-                        </div>
-                        <div style="font-size: 0.9em; color: #666; margin: 5px 0;">${record.totalGroups}组号码，${record.totalMatches}个重复组合</div>
-                        <div class="groups-action">
-                            <button class="quick-view-btn" onclick="loadHistory(${record.id})">加载此记录</button>
-                            <button class="quick-view-btn" style="background: #e74c3c;" onclick="deleteHistory(${record.id})">删除</button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            historyHtml += `</div></div>`;
-            document.getElementById('analysisResults').innerHTML = historyHtml;
-            switchTab('analysis');
-        }
-        
-        // 加载历史记录
-        function loadHistory(recordId) {
-            const history = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-            const record = history.find(r => r.id === recordId);
-            
-            if (record) {
-                document.getElementById('pasteInput').value = record.inputData;
-                setTimeout(() => { analyzeNumbers(); }, 100);
-                alert('历史记录加载成功！');
-            }
-        }
-        
-        // 删除历史记录
-        function deleteHistory(recordId) {
-            if (confirm('确定要删除这条记录吗？')) {
-                let history = JSON.parse(localStorage.getItem('analysis_history') || '[]');
-                history = history.filter(r => r.id !== recordId);
-                localStorage.setItem('analysis_history', JSON.stringify(history));
-                viewHistory();
-            }
-        }
-        
         // 快捷功能
         function clearInput() { document.getElementById('pasteInput').value = ''; }
         
@@ -574,7 +535,11 @@
         }
         
         // 页面加载完成
-        window.addEventListener('load', function() { console.log('📱 手机版号码分析工具已加载'); });
+        window.addEventListener('load', function() { 
+            console.log('📱 手机版号码分析工具已加载');
+            console.log('🚀 自动保存功能已启用 - 分析完成后自动保存到服务器');
+            console.log('🔗 Supabase URL:', SUPABASE_URL);
+        });
     </script>
 </body>
 </html>
