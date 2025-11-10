@@ -1,1 +1,150 @@
+// 试用限制功能
+function checkTrialPeriod() {
+    const FIRST_USE_KEY = 'first_use_timestamp';
+    const TRIAL_DAYS = 7; // 7天试用期
+    
+    // 获取首次使用时间
+    let firstUseTime = localStorage.getItem(FIRST_USE_KEY);
+    
+    if (!firstUseTime) {
+        // 如果是第一次使用，记录当前时间
+        firstUseTime = Date.now();
+        localStorage.setItem(FIRST_USE_KEY, firstUseTime.toString());
+        return true; // 试用期刚开始
+    }
+    
+    firstUseTime = parseInt(firstUseTime);
+    const currentTime = Date.now();
+    const trialEndTime = firstUseTime + (TRIAL_DAYS * 24 * 60 * 60 * 1000);
+    
+    // 检查是否超过试用期
+    if (currentTime > trialEndTime) {
+        showTrialExpiredDialog();
+        return false;
+    }
+    
+    return true;
+}
 
+// 显示试用到期对话框
+function showTrialExpiredDialog() {
+    // 创建对话框遮罩
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+    `;
+    
+    // 创建对话框内容
+    const dialog = document.createElement('div');
+    dialog.style.cssText = `
+        background: white;
+        border-radius: 15px;
+        padding: 30px 25px;
+        text-align: center;
+        max-width: 400px;
+        width: 100%;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
+    
+    dialog.innerHTML = `
+        <div style="font-size: 3em; margin-bottom: 15px;">⏰</div>
+        <h2 style="color: #e74c3c; margin-bottom: 15px; font-size: 1.4em;">试用已结束</h2>
+        <p style="color: #666; line-height: 1.5; margin-bottom: 25px; font-size: 0.95em;">
+            感谢您使用号码分析工具！<br>
+            7天试用期已结束，如需继续使用，请联系管理人员。
+        </p>
+        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 20px 0; border-left: 4px solid #3498db;">
+            <strong style="color: #2c3e50;">联系方式：</strong>
+            <p style="color: #7f8c8d; margin: 8px 0 0 0; font-size: 0.9em;">请通过官方渠道联系管理员获取正式授权</p>
+        </div>
+        <button onclick="closeTrialDialog()" style="
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            确定
+        </button>
+    `;
+    
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    
+    // 禁用页面滚动
+    document.body.style.overflow = 'hidden';
+}
+
+// 关闭试用对话框
+function closeTrialDialog() {
+    const overlay = document.querySelector('div[style*="position: fixed"][style*="z-index: 10000"]');
+    if (overlay) {
+        document.body.removeChild(overlay);
+        document.body.style.overflow = '';
+    }
+}
+
+// 包装原有功能函数，添加试用检查
+const originalAnalyzeNumbers = analyzeNumbers;
+analyzeNumbers = function() {
+    if (!checkTrialPeriod()) return;
+    return originalAnalyzeNumbers();
+};
+
+const originalShareResults = shareResults;
+shareResults = function() {
+    if (!checkTrialPeriod()) return;
+    return originalShareResults();
+};
+
+const originalShowAllGroups = showAllGroups;
+showAllGroups = function() {
+    if (!checkTrialPeriod()) return;
+    return originalShowAllGroups();
+};
+
+const originalJumpToGroup = jumpToGroup;
+jumpToGroup = function(groupNumber, triple, level) {
+    if (!checkTrialPeriod()) return;
+    return originalJumpToGroup(groupNumber, triple, level);
+};
+
+const originalQuickViewAllGroups = quickViewAllGroups;
+quickViewAllGroups = function(triple, level, groupIndices) {
+    if (!checkTrialPeriod()) return;
+    return originalQuickViewAllGroups(triple, level, groupIndices);
+};
+
+const originalClearHighlights = clearHighlights;
+clearHighlights = function() {
+    if (!checkTrialPeriod()) return;
+    return originalClearHighlights();
+};
+
+// 页面加载时检查试用期
+window.addEventListener('load', function() {
+    console.log('📱 手机版号码分析工具已加载');
+    console.log('🚀 自动保存功能已启用 - 分析完成后自动保存到服务器');
+    console.log('🔗 Supabase URL:', SUPABASE_URL);
+    console.log('⏰ 试用限制功能已启用');
+    
+    // 延迟检查试用期，让页面先加载完成
+    setTimeout(() => {
+        checkTrialPeriod();
+    }, 1000);
+});
