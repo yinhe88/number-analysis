@@ -2,548 +2,899 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>号码分析工具 - 手机版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <!-- 微信强制页面缩放启用，同时避免字体自动放大导致布局错乱 -->
+    <meta name="format-detection" content="telephone=no, email=no">
+    <title>号码分析大师 - 微信专版</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 0; }
-        .container { max-width: 100%; margin: 0 auto; background: white; min-height: 100vh; }
-        .header { background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white; padding: 20px 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
-        .header h1 { font-size: 1.4em; margin-bottom: 5px; font-weight: 600; }
-        .header p { opacity: 0.9; font-size: 0.9em; }
-        .input-section { padding: 20px 15px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; }
-        .input-box { background: white; border: 2px solid #3498db; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .input-box h3 { color: #2c3e50; margin-bottom: 12px; font-size: 1.1em; display: flex; align-items: center; gap: 8px; }
-        textarea { width: 100%; height: 120px; padding: 12px; border: 1px solid #e9ecef; border-radius: 8px; font-family: monospace; font-size: 16px; resize: none; background: #fafafa; }
-        textarea:focus { border-color: #3498db; outline: none; background: white; }
-        .format-tips { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 12px; margin-top: 10px; font-size: 0.85em; color: #1565c0; }
-        .format-tips ul { margin-left: 20px; margin-top: 5px; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .btn { padding: 14px 20px; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; min-height: 50px; }
-        .btn:active { transform: scale(0.98); }
-        .btn-primary { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; }
-        .btn-success { background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white; }
-        .btn-info { background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white; }
-        .content-tabs { display: flex; background: #f8f9fa; border-bottom: 1px solid #e9ecef; position: sticky; top: 0; z-index: 90; }
-        .tab { flex: 1; padding: 15px; text-align: center; background: none; border: none; font-size: 14px; font-weight: 600; color: #6c757d; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
-        .tab.active { color: #3498db; border-bottom-color: #3498db; background: white; }
-        .tab-content { display: none; padding: 15px; max-height: 60vh; overflow-y: auto; }
-        .tab-content.active { display: block; }
-        .groups-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .groups-header h2 { color: #2c3e50; margin: 0; }
-        .filter-info { background: #e3f2fd; border: 1px solid #bbdefb; border-radius: 8px; padding: 8px 12px; font-size: 0.85em; color: #1565c0; }
-        .groups-container { display: grid; gap: 10px; }
-        .group-item { background: white; border: 1px solid #e9ecef; border-radius: 10px; padding: 15px; display: flex; align-items: center; gap: 12px; transition: all 0.3s ease; }
-        .group-item.highlight { background: #fff3cd; border-color: #ffeaa7; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { background: #fff3cd; } 50% { background: #ffeaa7; } 100% { background: #fff3cd; } }
-        .group-item:active { background: #f8f9fa; }
-        .group-number { background: #3498db; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; font-size: 14px; }
-        .group-numbers { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
-        .number { background: #ecf0f1; padding: 8px 10px; border-radius: 6px; font-weight: bold; min-width: 32px; text-align: center; font-size: 14px; transition: all 0.3s ease; }
-        .number.highlight { background: #e74c3c; color: white; transform: scale(1.1); box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3); }
-        .number.highlight.level-2 { background: #3498db; box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3); }
-        .number.highlight.level-3 { background: #e67e22; box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3); }
-        .number.highlight.level-4 { background: #e74c3c; box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3); }
-        .number.highlight.level-5 { background: #c0392b; box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3); }
-        .analysis-results { display: flex; flex-direction: column; gap: 15px; }
-        .summary-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
-        .summary-card { background: white; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-left: 4px solid #3498db; }
-        .summary-card.highlight { border-left-color: #e74c3c; background: linear-gradient(135deg, #fff, #ffeaa7); }
-        .summary-number { font-size: 1.8em; font-weight: bold; color: #2c3e50; margin-bottom: 5px; }
-        .summary-label { font-size: 0.85em; color: #7f8c8d; font-weight: 600; }
-        .repeat-section { background: white; border-radius: 12px; padding: 0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .section-header { background: linear-gradient(135deg, #3498db, #2980b9); color: white; padding: 15px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
-        .section-badge { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
-        .repeat-list { padding: 10px; }
-        .repeat-item { padding: 12px 10px; border-bottom: 1px solid #f1f2f6; transition: all 0.3s ease; }
-        .repeat-item:last-child { border-bottom: none; }
-        .repeat-item:active { background: #f8f9fa; }
-        .triple-info { display: flex; align-items: center; margin-bottom: 8px; }
-        .triple-badge { background: #e74c3c; color: white; padding: 8px 12px; border-radius: 8px; font-weight: bold; font-size: 14px; min-width: 80px; text-align: center; margin-right: 12px; }
-        .triple-badge.level-2 { background: #3498db; }
-        .triple-badge.level-3 { background: #e67e22; }
-        .triple-badge.level-4 { background: #e74c3c; }
-        .triple-badge.level-5 { background: #c0392b; }
-        .repeat-count { font-size: 13px; color: #7f8c8d; }
-        .groups-action { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
-        .groups-list { display: flex; flex-wrap: wrap; gap: 5px; flex: 1; }
-        .group-badge { background: #ecf0f1; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
-        .group-badge:active { background: #3498db; color: white; transform: scale(0.95); }
-        .quick-view-btn { background: #27ae60; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; white-space: nowrap; margin-left: 10px; }
-        .quick-view-btn:active { background: #229954; transform: scale(0.95); }
-        .empty-state { text-align: center; color: #7f8c8d; padding: 40px 20px; font-style: italic; }
-        .success-state { text-align: center; padding: 40px 20px; color: #27ae60; }
-        .success-state .icon { font-size: 3em; margin-bottom: 15px; }
-        .loading { text-align: center; padding: 40px 20px; color: #3498db; }
-        .quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; }
-        .quick-btn { padding: 10px 8px; border: 1px solid #3498db; border-radius: 8px; background: white; color: #3498db; font-size: 12px; text-align: center; transition: all 0.3s ease; }
-        .quick-btn:active { background: #3498db; color: white; }
-        @media (max-width: 480px) {
-            .btn-group { grid-template-columns: 1fr; }
-            .summary-cards { grid-template-columns: repeat(2, 1fr); }
-            .quick-actions { grid-template-columns: repeat(3, 1fr); }
-            .groups-action { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .quick-view-btn { margin-left: 0; align-self: flex-end; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
-        input, textarea, select { font-size: 16px; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Roboto, Arial, sans-serif;
+            background: #f1f5f9;
+            line-height: 1.5;
+            /* 微信内优化 */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .app-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        .hero {
+            background: linear-gradient(105deg, #0f172a 0%, #1e3a8a 100%);
+            color: white;
+            padding: 24px 20px;
+            border-bottom-left-radius: 24px;
+            border-bottom-right-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::after {
+            content: "🔍";
+            position: absolute;
+            right: -15px;
+            bottom: -20px;
+            font-size: 100px;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+        .hero h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .hero p {
+            opacity: 0.85;
+            font-size: 0.85rem;
+            margin-top: 6px;
+        }
+
+        .input-card {
+            margin: 20px 16px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+            border: 1px solid #eef2ff;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 16px 18px 0;
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+        textarea {
+            width: 100%;
+            border: none;
+            padding: 12px 18px;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 15px;
+            line-height: 1.5;
+            background: #fafcff;
+            resize: vertical;
+            color: #0c4a6e;
+        }
+        textarea:focus {
+            outline: none;
+            background: white;
+        }
+        .format-hint {
+            background: #f0f9ff;
+            padding: 10px 18px;
+            font-size: 0.75rem;
+            color: #0369a1;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .action-grid {
+            padding: 0 16px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+        }
+        .btn {
+            flex: 1;
+            padding: 14px 0;
+            border-radius: 50px;
+            font-weight: 600;
+            border: none;
+            font-size: 0.95rem;
+            background: #f1f5f9;
+            color: #1e293b;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+            box-shadow: 0 4px 8px rgba(37,99,235,0.2);
+        }
+        .btn-primary:active { transform: scale(0.97); background: #1d4ed8; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:active { transform: scale(0.97); background: #059669; }
+        .quick-chip {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .chip {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip:active { background: #e2e8f0; }
+
+        .tab-bar {
+            display: flex;
+            background: white;
+            margin: 0 16px;
+            border-radius: 60px;
+            background: #f1f5f9;
+            padding: 4px;
+            margin-bottom: 16px;
+        }
+        .tab-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            border: none;
+            background: transparent;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #475569;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            background: white;
+            color: #2563eb;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .tab-pane {
+            display: none;
+            padding: 0 16px 24px;
+        }
+        .tab-pane.active {
+            display: block;
+        }
+
+        .groups-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .badge-filter {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .groups-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 65vh;
+            overflow-y: auto;
+            padding-bottom: 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .group-card {
+            background: white;
+            border: 1px solid #edf2f7;
+            border-radius: 20px;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .group-card.highlight {
+            background: #fffbeb;
+            border-left: 5px solid #f59e0b;
+            border-radius: 20px;
+            animation: softPulse 1.2s ease;
+        }
+        @keyframes softPulse {
+            0% { background: #fff3cd; }
+            100% { background: #fffbeb; }
+        }
+        .group-index {
+            width: 42px;
+            height: 42px;
+            background: #eef2ff;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #1e40af;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .numbers-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex: 1;
+        }
+        .num-badge {
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            font-family: monospace;
+            transition: all 0.1s ease;
+        }
+        .num-badge.highlight {
+            background: #ef4444;
+            color: white;
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(239,68,68,0.3);
+        }
+        .num-badge.highlight.level-2 { background: #3b82f6; }
+        .num-badge.highlight.level-3 { background: #f97316; }
+        .num-badge.highlight.level-4 { background: #dc2626; }
+        .num-badge.highlight.level-5 { background: #b91c1c; }
+        .num-badge.highlight.pair-highlight {
+            background: #8b5cf6;
+            box-shadow: 0 2px 8px rgba(139,92,246,0.4);
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #eef2ff;
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+        .combo-section {
+            background: white;
+            border-radius: 28px;
+            border: 1px solid #eef2ff;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .combo-header {
+            background: #f8fafc;
+            padding: 16px 18px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eef2ff;
+        }
+        .combo-list {
+            max-height: 55vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .combo-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .combo-triple {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .triple-digits {
+            background: #eef2ff;
+            padding: 6px 14px;
+            border-radius: 40px;
+            font-weight: 800;
+            font-family: monospace;
+            font-size: 1rem;
+        }
+        .repeat-count {
+            font-size: 0.7rem;
+            background: #e2e8f0;
+            padding: 3px 10px;
+            border-radius: 30px;
+            color: #334155;
+        }
+        .group-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .group-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+        }
+        .group-link {
+            background: #f1f5f9;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .group-link:active { background: #cbd5e1; }
+        .view-all-btn {
+            background: none;
+            border: 1px solid #cbd5e1;
+            border-radius: 30px;
+            padding: 6px 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 48px 20px;
+            color: #94a3b8;
+        }
+        .footer-note {
+            font-size: 0.65rem;
+            text-align: center;
+            color: #94a3b8;
+            padding: 20px;
+            border-top: 1px solid #eef2ff;
+            margin-top: 12px;
+        }
+        /* 微信内点击元素无闪动 */
+        button, .chip, .group-link, .view-all-btn, .tab-btn {
+            cursor: pointer;
+            touch-action: manipulation;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>📱 号码分析工具</h1>
-            <p>粘贴号码，一键分析重复组合</p>
-        </div>
-        
-        <div class="input-section">
-            <div class="input-box">
-                <h3>📝 粘贴号码数据</h3>
-                <textarea id="pasteInput" placeholder="请粘贴您的号码数据，例如：
+<div class="app-container">
+    <div class="hero">
+        <h1>📊 号码分析大师</h1>
+        <p>三同号重复 + 双同号匹配 · 微信专版</p>
+    </div>
+
+    <div class="input-card">
+        <div class="card-header">📋 粘贴号码数据</div>
+        <textarea id="pasteInput" rows="4" placeholder="每行6个号码，空格/逗号分隔，例如：
 3 7 12 19 28 45
 5 9 14 19 33 49
 2 12 19 25 28 37
 8 15 22 30 41 45"></textarea>
-                
-                <div class="format-tips">
-                    <strong>支持格式：</strong>
-                    <ul>
-                        <li>每行6个数字，空格分隔</li>
-                        <li>也支持逗号、制表符分隔</li>
-                        <li>支持任意行数（20组、100组等）</li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="btn-group">
-                <button class="btn btn-primary" onclick="analyzeNumbers()">🔍 开始分析</button>
-                <button class="btn btn-success" onclick="shareResults()">📋 复制结果</button>
-                <button class="btn btn-info" onclick="showAllGroups()">📄 显示全部</button>
-            </div>
-            
-            <div class="quick-actions">
-                <button class="quick-btn" onclick="clearInput()">清空输入</button>
-                <button class="quick-btn" onclick="fillExample()">填充示例</button>
-                <button class="quick-btn" onclick="clearHighlights()">清除高亮</button>
-            </div>
-        </div>
-        
-        <div class="content-tabs">
-            <button class="tab active" onclick="switchTab('groups')">号码组</button>
-            <button class="tab" onclick="switchTab('analysis')">分析结果</button>
-        </div>
-        
-        <div id="groupsTab" class="tab-content active">
-            <div class="groups-header">
-                <h2>号码组 (<span id="groupCount">0</span>组)</h2>
-                <div class="filter-info" id="filterInfo" style="display: none;">仅显示重复组</div>
-            </div>
-            <div id="groupsContainer" class="groups-container">
-                <div class="empty-state">请在上方粘贴号码数据后点击"开始分析"</div>
-            </div>
-        </div>
-        
-        <div id="analysisTab" class="tab-content">
-            <div id="analysisResults">
-                <div class="empty-state">等待分析数据...</div>
-            </div>
+        <div class="format-hint">
+            <span>✅ 每行6个数字</span>
+            <span>📌 支持空格 / 逗号 / 制表符</span>
+            <span>🚀 任意组数均可</span>
         </div>
     </div>
 
-    <script>
-        // Supabase 配置 - 自动保存功能
-        const SUPABASE_URL = 'https://htkuexwyhnsuzkfksbgr.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0a3VleHd5aG5zdXprZmtzYmdyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI0Mzk4ODIsImV4cCI6MjA3ODAxNTg4Mn0.AJFg7H9HKSGt45ZEJ9TSkwR02s_4ikIdjilJpEYtLvM';
+    <div class="action-grid">
+        <div class="btn-row">
+            <button class="btn btn-primary" id="analyzeBtn">🔍 深度分析</button>
+            <button class="btn btn-success" id="copyResultBtn">📋 复制报告</button>
+        </div>
+        <div class="quick-chip">
+            <div class="chip" id="clearInputBtn">🗑️ 清空</div>
+            <div class="chip" id="exampleBtn">📌 填充示例</div>
+        </div>
+    </div>
 
-        let currentData = null;
-        let highlightedGroups = new Set();
-        let currentHighlightedTriple = null;
-        let isFilteredView = false;
-        let originalGroups = [];
-        
-        // 生成用户ID
+    <div class="tab-bar">
+        <button class="tab-btn active" data-tab="groups">📦 号码组</button>
+        <button class="tab-btn" data-tab="analysis">🔺 三同号重复</button>
+        <button class="tab-btn" data-tab="pair">🔄 双同号重复</button>
+    </div>
+
+    <div id="groupsPane" class="tab-pane active">
+        <div class="groups-header">
+            <h3 style="font-size: 1rem;">📌 全部组别 <span id="groupCount">0</span></h3>
+            <div id="filterBadge" class="badge-filter" style="display: none;">🔍 筛选模式</div>
+        </div>
+        <div id="groupsContainer" class="groups-list">
+            <div class="empty-state">✨ 粘贴号码并点击“深度分析”</div>
+        </div>
+    </div>
+
+    <div id="analysisPane" class="tab-pane">
+        <div id="analysisArea"><div class="empty-state">⚡ 等待分析数据...</div></div>
+    </div>
+
+    <div id="pairPane" class="tab-pane">
+        <div id="pairArea"><div class="empty-state">⚡ 分析后将显示「恰好拥有2个相同号码」完整统计</div></div>
+    </div>
+    <div class="footer-note">🔹 三同号:任意两组相同3个号码 &nbsp;|&nbsp; 🔸 双同号:交集=2个号码 (含重复次数/高频)</div>
+</div>
+
+<script>
+    (function(){
+        // ---------- 微信环境兼容：确保 localStorage 可用，降级处理 ----------
+        let storageAvailable = true;
+        try {
+            const test = '__storage_test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+        } catch(e) {
+            storageAvailable = false;
+            console.warn("localStorage 不可用，将使用内存存储");
+        }
         function getUserId() {
-            let userId = localStorage.getItem('user_id');
-            if (!userId) {
-                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('user_id', userId);
+            if (!storageAvailable) return 'wechat_temp_' + Date.now();
+            let id = localStorage.getItem('user_id');
+            if (!id) {
+                id = 'wx_user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+                localStorage.setItem('user_id', id);
             }
-            return userId;
+            return id;
         }
 
-        // 自动保存到 Supabase
-        async function saveToSupabase(text, groups, analysis) {
-            try {
-                console.log('🔄 开始保存到 Supabase...');
-                console.log('📦 准备保存的数据:', {
-                    user_id: getUserId(),
-                    input_data: text,
-                    analysis_result: analysis,
-                    total_groups: groups.length,
-                    total_matches: Object.keys(analysis).length
-                });
+        // 全局数据
+        let currentGroups = [];
+        let currentTripleAnalysis = {};
+        let currentPairGroupedAnalysis = {};  // 双同号聚合 (组合维度)
 
-                const response = await fetch(SUPABASE_URL + '/rest/v1/analysis_records', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'apikey': SUPABASE_KEY,
-                        'Authorization': 'Bearer ' + SUPABASE_KEY,
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({
-                        user_id: getUserId(),
-                        input_data: text,
-                        analysis_result: analysis,
-                        total_groups: groups.length,
-                        total_matches: Object.keys(analysis).length,
-                        created_at: new Date().toISOString()
-                    })
-                });
-                
-                if (response.ok) {
-                    console.log('✅ 分析结果已自动保存到服务器');
-                    return true;
-                } else {
-                    const errorText = await response.text();
-                    console.error('❌ 自动保存失败:', response.status, errorText);
-                    return false;
-                }
-                
-            } catch (error) {
-                console.error('❌ 自动保存错误:', error);
-                return false;
-            }
-        }
+        let highlightedGroupsSet = new Set();
+        let activeFilterIndices = null;
+        let currentHighlightedTriple = null;
+        let currentHighlightedPair = null;
 
-        // 切换标签页
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(tabName + 'Tab').classList.add('active');
-            document.querySelector(`.tab[onclick="switchTab('${tabName}')"]`).classList.add('active');
-        }
-        
-        // 解析粘贴的文本数据
-        function parsePastedData(text) {
-            const lines = text.split('\n').filter(line => line.trim() !== '');
+        // DOM 元素
+        const pasteInput = document.getElementById('pasteInput');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const copyBtn = document.getElementById('copyResultBtn');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+        const exampleBtn = document.getElementById('exampleBtn');
+        const groupsContainer = document.getElementById('groupsContainer');
+        const groupCountSpan = document.getElementById('groupCount');
+        const filterBadge = document.getElementById('filterBadge');
+        const analysisArea = document.getElementById('analysisArea');
+        const pairArea = document.getElementById('pairArea');
+
+        // 解析数据
+        function parseGroupsFromText(text) {
+            const lines = text.split(/\r?\n/);
             const groups = [];
-            
-            for (const line of lines) {
-                const numbers = line.trim().split(/[\s,]+/).map(num => {
-                    const parsed = parseInt(num.trim());
-                    return isNaN(parsed) ? null : parsed;
-                }).filter(num => num !== null);
-                
+            for (let line of lines) {
+                line = line.trim();
+                if (line === "") continue;
+                let nums = line.split(/[\s,，\t]+/);
+                let numbers = [];
+                for (let n of nums) {
+                    let num = parseInt(n, 10);
+                    if (!isNaN(num) && n.trim() !== "") numbers.push(num);
+                }
                 if (numbers.length >= 6) {
-                    const group = numbers.slice(0, 6).sort((a, b) => a - b);
+                    let group = numbers.slice(0, 6).sort((a,b)=>a-b);
                     groups.push(group);
                 }
             }
             return groups;
         }
-        
-        // 分析三同号
-        function analyzeTriples(groups) {
-            const tripleMatches = new Map();
-            
-            for (let i = 0; i < groups.length; i++) {
-                const group = groups[i];
-                for (let a = 0; a < group.length - 2; a++) {
-                    for (let b = a + 1; b < group.length - 1; b++) {
-                        for (let c = b + 1; c < group.length; c++) {
-                            const triple = [group[a], group[b], group[c]].sort((x, y) => x - y);
-                            const tripleKey = triple.join(',');
-                            
-                            if (!tripleMatches.has(tripleKey)) {
-                                tripleMatches.set(tripleKey, []);
-                            }
-                            if (!tripleMatches.get(tripleKey).includes(i)) {
-                                tripleMatches.get(tripleKey).push(i);
-                            }
+
+        // 三同号检测
+        function detectTripleOverlaps(groups) {
+            const tripleMap = new Map();
+            for (let idx = 0; idx < groups.length; idx++) {
+                const group = groups[idx];
+                const len = group.length;
+                for (let i = 0; i < len - 2; i++) {
+                    for (let j = i+1; j < len - 1; j++) {
+                        for (let k = j+1; k < len; k++) {
+                            const triple = [group[i], group[j], group[k]].sort((x,y)=>x-y);
+                            const key = triple.join(',');
+                            if (!tripleMap.has(key)) tripleMap.set(key, []);
+                            const arr = tripleMap.get(key);
+                            if (arr[arr.length-1] !== idx) arr.push(idx);
                         }
                     }
                 }
             }
-            
             const result = {};
-            for (const [tripleKey, groups] of tripleMatches) {
-                if (groups.length >= 2) {
-                    result[tripleKey] = { groups: groups, numbers: tripleKey.split(',').map(Number) };
+            for (let [key, groupIndices] of tripleMap.entries()) {
+                if (groupIndices.length >= 2) {
+                    result[key] = { groups: groupIndices, numbers: key.split(',').map(Number) };
                 }
             }
             return result;
         }
-        
-        // 主分析函数 - 自动保存版本
-        async function analyzeNumbers() {
-            const text = document.getElementById('pasteInput').value.trim();
-            if (!text) { 
-                alert('请先粘贴号码数据！'); 
-                return; 
-            }
-            
-            const groups = parsePastedData(text);
-            if (groups.length === 0) { 
-                alert('未找到有效的号码数据，请检查格式！'); 
-                return; 
-            }
-            
-            document.getElementById('analysisResults').innerHTML = '<div class="loading">正在分析数据...</div>';
-            
-            // 使用异步等待，确保分析完成后再保存
-            setTimeout(async () => {
-                const analysis = analyzeTriples(groups);
-                currentData = { groups, analysis };
-                originalGroups = groups;
-                
-                displayGroups(groups);
-                displayAnalysis(groups, analysis);
-                switchTab('analysis');
-                
-                // 自动保存到服务器
-                const saveSuccess = await saveToSupabase(text, groups, analysis);
-                if (saveSuccess) {
-                    console.log('🎉 自动保存完成！');
-                } else {
-                    console.log('⚠️ 自动保存失败，但分析功能正常');
+
+        // 双同号恰好2码 + 聚合（按数字对聚合，统计组对次数）
+        function detectAndGroupExactTwoPairs(groups) {
+            const pairMap = new Map(); // key: "num1,num2" -> { groupPairs: [], numbers }
+            for (let i = 0; i < groups.length; i++) {
+                for (let j = i+1; j < groups.length; j++) {
+                    const setA = new Set(groups[i]);
+                    const setB = new Set(groups[j]);
+                    const common = [];
+                    for (let val of setA) {
+                        if (setB.has(val)) common.push(val);
+                    }
+                    if (common.length === 2) {
+                        const key = common.sort((a,b)=>a-b).join(',');
+                        if (!pairMap.has(key)) {
+                            pairMap.set(key, { groupPairs: [], numbers: common.sort((a,b)=>a-b) });
+                        }
+                        pairMap.get(key).groupPairs.push({ groupA: i, groupB: j });
+                    }
                 }
-                
-                if (navigator.vibrate) { 
-                    navigator.vibrate(100); 
+            }
+            const result = {};
+            for (let [key, data] of pairMap.entries()) {
+                const involvedGroupsSet = new Set();
+                for (let gp of data.groupPairs) {
+                    involvedGroupsSet.add(gp.groupA);
+                    involvedGroupsSet.add(gp.groupB);
                 }
-            }, 100);
+                const involvedGroups = Array.from(involvedGroupsSet).sort((a,b)=>a-b);
+                result[key] = {
+                    groups: involvedGroups,
+                    groupPairs: data.groupPairs,
+                    numbers: data.numbers,
+                    repeatTimes: data.groupPairs.length
+                };
+            }
+            return result;
         }
-        
-        // 显示号码组
-        function displayGroups(groups, filteredGroupIndices = null) {
-            const container = document.getElementById('groupsContainer');
-            const countElement = document.getElementById('groupCount');
-            const filterInfo = document.getElementById('filterInfo');
-            
-            if (filteredGroupIndices) {
-                countElement.textContent = `${filteredGroupIndices.length}/${groups.length}`;
-                filterInfo.style.display = 'block';
-                isFilteredView = true;
+
+        // 渲染号码组（通用）
+        function renderGroups(groups, filterIndices = null) {
+            const groupsToRender = filterIndices ? filterIndices.map(i => ({ group: groups[i], originalIdx: i })) : groups.map((g, idx) => ({ group: g, originalIdx: idx }));
+            if (filterIndices) {
+                groupCountSpan.innerText = `${filterIndices.length}/${groups.length}`;
+                filterBadge.style.display = 'inline-block';
             } else {
-                countElement.textContent = groups.length;
-                filterInfo.style.display = 'none';
-                isFilteredView = false;
+                groupCountSpan.innerText = groups.length;
+                filterBadge.style.display = 'none';
             }
-            
-            container.innerHTML = '';
-            if (groups.length === 0) {
-                container.innerHTML = '<div class="empty-state">没有号码数据</div>';
+            if (!groupsToRender.length) {
+                groupsContainer.innerHTML = '<div class="empty-state">暂无数据</div>';
                 return;
             }
-            
-            const groupsToShow = filteredGroupIndices ? 
-                filteredGroupIndices.map(index => ({ group: groups[index], index })) : 
-                groups.map((group, index) => ({ group, index }));
-            
-            groupsToShow.forEach(({ group, index }) => {
-                const groupElement = document.createElement('div');
-                groupElement.className = 'group-item';
-                groupElement.id = `group-${index + 1}`;
-                groupElement.innerHTML = `
-                    <div class="group-number">${index + 1}</div>
-                    <div class="group-numbers">
-                        ${group.map(num => `<span class="number" data-number="${num}">${num}</span>`).join('')}
+            groupsContainer.innerHTML = '';
+            for (let item of groupsToRender) {
+                const groupNum = item.originalIdx + 1;
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group-card';
+                if (highlightedGroupsSet.has(groupNum)) groupDiv.classList.add('highlight');
+                groupDiv.id = `groupCard-${groupNum}`;
+                let numbersHtml = '';
+                for (let num of item.group) {
+                    let extraClass = '';
+                    if (currentHighlightedTriple && currentHighlightedTriple.tripleNumbers.includes(num)) {
+                        const level = currentHighlightedTriple.level || 2;
+                        extraClass = `highlight level-${level}`;
+                    }
+                    if (currentHighlightedPair && currentHighlightedPair.commonNumbers && currentHighlightedPair.commonNumbers.includes(num)) {
+                        extraClass = `highlight pair-highlight`;
+                    }
+                    numbersHtml += `<span class="num-badge ${extraClass}" data-num="${num}">${num}</span>`;
+                }
+                groupDiv.innerHTML = `
+                    <div class="group-index">${groupNum}</div>
+                    <div class="numbers-row">${numbersHtml}</div>
+                `;
+                groupsContainer.appendChild(groupDiv);
+            }
+        }
+
+        // 三同号视图渲染
+        function renderTripleAnalysis(groups, analysis) {
+            const totalKeys = Object.keys(analysis).length;
+            if (totalKeys === 0) {
+                analysisArea.innerHTML = `<div class="empty-state">🎉 无重复三同号组合，数据无三码重叠。</div>`;
+                return;
+            }
+            let maxRepeat = 0, importantCount = 0;
+            for (let key of Object.keys(analysis)) {
+                const cnt = analysis[key].groups.length;
+                if (cnt > maxRepeat) maxRepeat = cnt;
+                if (cnt >= 3) importantCount++;
+            }
+            let html = `
+                <div class="summary-stats">
+                    <div class="stat-card"><div class="stat-number">${groups.length}</div><div class="stat-label">总号码组</div></div>
+                    <div class="stat-card"><div class="stat-number">${totalKeys}</div><div class="stat-label">重复组合数</div></div>
+                    <div class="stat-card"><div class="stat-number">${maxRepeat}</div><div class="stat-label">最高重复次数</div></div>
+                    <div class="stat-card"><div class="stat-number">${importantCount}</div><div class="stat-label">🔥 高频(≥3)</div></div>
+                </div>
+                <div class="combo-section">
+                    <div class="combo-header"><span>🔺 三同号重复详情</span><span>点击组号定位</span></div>
+                    <div class="combo-list">
+            `;
+            const sorted = Object.entries(analysis).sort((a,b) => b[1].groups.length - a[1].groups.length);
+            for (let [tripleKey, data] of sorted) {
+                const repeatTimes = data.groups.length;
+                const level = Math.min(repeatTimes, 5);
+                const tripleDisplay = tripleKey.split(',').join(' · ');
+                const groupIndices = data.groups;
+                html += `
+                    <div class="combo-item">
+                        <div class="combo-triple">
+                            <span class="triple-digits" style="background:${level>=3?'#fef3c7':'#eef2ff'}">${tripleDisplay}</span>
+                            <span class="repeat-count">🔁 出现 ${repeatTimes} 次</span>
+                        </div>
+                        <div class="group-chips">
+                            <div class="group-buttons">
+                                ${groupIndices.map(idx => `<span class="group-link triple-jump" data-group="${idx+1}" data-triple="${tripleKey}" data-level="${level}">组${idx+1}</span>`).join('')}
+                            </div>
+                            <button class="view-all-btn triple-filter" data-triple='${JSON.stringify({triple:tripleKey, level, indices:groupIndices})}'>👁️ 只看这${repeatTimes}组</button>
+                        </div>
                     </div>
                 `;
-                container.appendChild(groupElement);
+            }
+            html += `</div></div>`;
+            analysisArea.innerHTML = html;
+            // 绑定事件
+            document.querySelectorAll('.triple-jump').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    const groupNum = parseInt(el.dataset.group);
+                    const tripleKey = el.dataset.triple;
+                    const level = parseInt(el.dataset.level);
+                    jumpToTripleGroup(groupNum, tripleKey, level);
+                });
+            });
+            document.querySelectorAll('.triple-filter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const data = JSON.parse(btn.dataset.triple);
+                    filterToTripleGroups(data.indices, data.triple, data.level);
+                });
             });
         }
-        
-        // 显示所有组
-        function showAllGroups() {
-            if (originalGroups.length > 0) { displayGroups(originalGroups); clearHighlights(); }
+
+        // 双同号视图渲染（完整统计）
+        function renderPairGroupedAnalysis(groups, pairGrouped) {
+            const totalKeys = Object.keys(pairGrouped).length;
+            if (totalKeys === 0) {
+                pairArea.innerHTML = `<div class="empty-state">✨ 没有发现「恰好拥有2个相同号码」的组对。</div>`;
+                return;
+            }
+            let maxRepeat = 0, highFreqCount = 0;
+            for (let key of Object.keys(pairGrouped)) {
+                const cnt = pairGrouped[key].repeatTimes;
+                if (cnt > maxRepeat) maxRepeat = cnt;
+                if (cnt >= 3) highFreqCount++;
+            }
+            let html = `
+                <div class="summary-stats">
+                    <div class="stat-card"><div class="stat-number">${groups.length}</div><div class="stat-label">总号码组</div></div>
+                    <div class="stat-card"><div class="stat-number">${totalKeys}</div><div class="stat-label">双号组合数</div></div>
+                    <div class="stat-card"><div class="stat-number">${maxRepeat}</div><div class="stat-label">最高组对次数</div></div>
+                    <div class="stat-card"><div class="stat-number">${highFreqCount}</div><div class="stat-label">🔥 高频(≥3对)</div></div>
+                </div>
+                <div class="combo-section">
+                    <div class="combo-header"><span>🔄 双同号组合 (交集=2)</span><span>点击查看配对</span></div>
+                    <div class="combo-list">
+            `;
+            const sorted = Object.entries(pairGrouped).sort((a,b) => b[1].repeatTimes - a[1].repeatTimes);
+            for (let [pairKey, data] of sorted) {
+                const repeatTimes = data.repeatTimes;
+                const level = Math.min(repeatTimes, 5);
+                const pairDisplay = data.numbers.join(' · ');
+                const involvedGroups = data.groups;
+                html += `
+                    <div class="combo-item">
+                        <div class="combo-triple">
+                            <span class="triple-digits" style="background:${level>=3?'#fef3c7':'#ede9fe'}">📌 共同号码: ${pairDisplay}</span>
+                            <span class="repeat-count">🔁 出现在 ${repeatTimes} 个组对中</span>
+                        </div>
+                        <div class="group-chips">
+                            <div class="group-buttons">
+                                ${involvedGroups.map(idx => `<span class="group-link pair-group-jump" data-group="${idx+1}" data-common='${JSON.stringify(data.numbers)}'>组${idx+1}</span>`).join('')}
+                            </div>
+                            <button class="view-all-btn pair-filter-combo" data-pairinfo='${JSON.stringify({involvedIndices: involvedGroups, pairNumbers: data.numbers})}'>👁️ 查看所有相关组</button>
+                        </div>
+                    </div>
+                `;
+            }
+            html += `</div></div>`;
+            pairArea.innerHTML = html;
+            // 绑定双同号组跳转
+            document.querySelectorAll('.pair-group-jump').forEach(el => {
+                el.addEventListener('click', () => {
+                    const groupNum = parseInt(el.dataset.group);
+                    const commonNumbers = JSON.parse(el.dataset.common);
+                    highlightSingleGroupWithPair(groupNum, commonNumbers);
+                });
+            });
+            document.querySelectorAll('.pair-filter-combo').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const info = JSON.parse(btn.dataset.pairinfo);
+                    filterToPairComboGroups(info.involvedIndices, info.pairNumbers);
+                });
+            });
         }
-        
-        // 跳转到指定组并高亮重复号码
-        function jumpToGroup(groupNumber, triple, level) {
-            clearHighlights();
-            currentHighlightedTriple = { triple, level };
-            
-            const groupElement = document.getElementById(`group-${groupNumber}`);
-            if (groupElement) {
-                groupElement.classList.add('highlight');
-                highlightedGroups.add(groupNumber);
-                
-                const numbers = triple.split(',').map(Number);
-                const numberElements = groupElement.querySelectorAll('.number');
-                numberElements.forEach(element => {
-                    const num = parseInt(element.getAttribute('data-number'));
-                    if (numbers.includes(num)) {
-                        element.classList.add('highlight', `level-${level}`);
+
+        // 辅助高亮交互
+        function highlightSingleGroupWithPair(groupNum, commonNumbers) {
+            clearHighlightsAndFilter();
+            currentHighlightedPair = { commonNumbers, groupIndices: [groupNum-1] };
+            highlightedGroupsSet.add(groupNum);
+            renderGroups(currentGroups, null);
+            const card = document.getElementById(`groupCard-${groupNum}`);
+            if (card) {
+                const numSpans = card.querySelectorAll('.num-badge');
+                numSpans.forEach(span => {
+                    const val = parseInt(span.dataset.num);
+                    if (commonNumbers.includes(val)) span.classList.add('highlight', 'pair-highlight');
+                });
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            switchTab('groups');
+        }
+        function filterToPairComboGroups(groupIndices, commonNumbers) {
+            clearHighlightsAndFilter();
+            activeFilterIndices = [...groupIndices];
+            currentHighlightedPair = { commonNumbers, groupIndices };
+            groupIndices.forEach(idx => highlightedGroupsSet.add(idx+1));
+            renderGroups(currentGroups, activeFilterIndices);
+            setTimeout(() => {
+                for (let idx of groupIndices) {
+                    const card = document.getElementById(`groupCard-${idx+1}`);
+                    if (card) {
+                        const numSpans = card.querySelectorAll('.num-badge');
+                        numSpans.forEach(span => {
+                            const val = parseInt(span.dataset.num);
+                            if (commonNumbers.includes(val)) span.classList.add('highlight', 'pair-highlight');
+                        });
+                    }
+                }
+            }, 20);
+            switchTab('groups');
+        }
+        function jumpToTripleGroup(groupNum, tripleKey, level) {
+            clearHighlightsAndFilter();
+            const tripleNumbers = tripleKey.split(',').map(Number);
+            currentHighlightedTriple = { tripleNumbers, level };
+            highlightedGroupsSet.add(groupNum);
+            renderGroups(currentGroups, null);
+            enhanceCardNumbers(groupNum, tripleNumbers, `level-${level}`);
+            switchTab('groups');
+        }
+        function filterToTripleGroups(groupIndices, tripleKey, level) {
+            clearHighlightsAndFilter();
+            activeFilterIndices = [...groupIndices];
+            const tripleNumbers = tripleKey.split(',').map(Number);
+            currentHighlightedTriple = { tripleNumbers, level };
+            groupIndices.forEach(idx => highlightedGroupsSet.add(idx+1));
+            renderGroups(currentGroups, activeFilterIndices);
+            setTimeout(() => {
+                for (let idx of groupIndices) enhanceCardNumbers(idx+1, tripleNumbers, `level-${level}`);
+            }, 20);
+            switchTab('groups');
+        }
+        function enhanceCardNumbers(groupNum, numbersToHighlight, cssClass) {
+            const card = document.getElementById(`groupCard-${groupNum}`);
+            if (card) {
+                card.classList.add('highlight');
+                const numSpans = card.querySelectorAll('.num-badge');
+                numSpans.forEach(span => {
+                    const val = parseInt(span.dataset.num);
+                    if (numbersToHighlight.includes(val)) {
+                        span.classList.add('highlight');
+                        if (cssClass) span.classList.add(cssClass);
                     }
                 });
-                
-                switchTab('groups');
-                setTimeout(() => { groupElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
-        
-        // 一键查看所有重复组
-        function quickViewAllGroups(triple, level, groupIndices) {
-            clearHighlights();
-            currentHighlightedTriple = { triple, level };
-            displayGroups(originalGroups, groupIndices);
-            
-            groupIndices.forEach(groupIndex => {
-                const groupNumber = groupIndex + 1;
-                const groupElement = document.getElementById(`group-${groupNumber}`);
-                if (groupElement) {
-                    groupElement.classList.add('highlight');
-                    highlightedGroups.add(groupNumber);
-                    
-                    const numbers = triple.split(',').map(Number);
-                    const numberElements = groupElement.querySelectorAll('.number');
-                    numberElements.forEach(element => {
-                        const num = parseInt(element.getAttribute('data-number'));
-                        if (numbers.includes(num)) {
-                            element.classList.add('highlight', `level-${level}`);
-                        }
-                    });
-                }
-            });
-            
-            switchTab('groups');
-            if (groupIndices.length > 0) {
-                const firstGroupElement = document.getElementById(`group-${groupIndices[0] + 1}`);
-                if (firstGroupElement) {
-                    setTimeout(() => { firstGroupElement.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 300);
-                }
-            }
-        }
-        
-        // 清除所有高亮
-        function clearHighlights() {
-            highlightedGroups.forEach(groupNumber => {
-                const groupElement = document.getElementById(`group-${groupNumber}`);
-                if (groupElement) {
-                    groupElement.classList.remove('highlight');
-                    const numberElements = groupElement.querySelectorAll('.number');
-                    numberElements.forEach(element => {
-                        element.classList.remove('highlight', 'level-2', 'level-3', 'level-4', 'level-5');
-                    });
-                }
-            });
-            highlightedGroups.clear();
+        function clearHighlightsAndFilter() {
+            highlightedGroupsSet.clear();
+            activeFilterIndices = null;
             currentHighlightedTriple = null;
+            currentHighlightedPair = null;
+            if (currentGroups.length) renderGroups(currentGroups, null);
         }
-        
-        // 显示分析结果
-        function displayAnalysis(groups, analysis) {
-            const container = document.getElementById('analysisResults');
-            
-            if (Object.keys(analysis).length === 0) {
-                container.innerHTML = `
-                    <div class="success-state">
-                        <div class="icon">🎉</div>
-                        <div>太棒了！没有发现重复的三同号</div>
-                        <div style="margin-top: 10px; font-size: 0.9em; color: #7f8c8d;">分析了 ${groups.length} 组号码，数据分布良好</div>
-                    </div>
-                `;
-                return;
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`${tabId}Pane`).classList.add('active');
+            const target = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.dataset.tab === tabId);
+            if (target) target.classList.add('active');
+        }
+        async function performAnalysis() {
+            const rawText = pasteInput.value;
+            if (!rawText.trim()) { alert('请先粘贴号码数据'); return; }
+            const groups = parseGroupsFromText(rawText);
+            if (groups.length === 0) { alert('未检测到有效号码组 (每行至少6个数字)'); return; }
+            currentGroups = groups;
+            currentTripleAnalysis = detectTripleOverlaps(groups);
+            currentPairGroupedAnalysis = detectAndGroupExactTwoPairs(groups);
+            clearHighlightsAndFilter();
+            renderGroups(groups, null);
+            renderTripleAnalysis(groups, currentTripleAnalysis);
+            renderPairGroupedAnalysis(groups, currentPairGroupedAnalysis);
+            if (navigator.vibrate) navigator.vibrate(50);
+            switchTab('analysis');
+        }
+        function copyReport() {
+            if (!currentGroups.length) { alert('无数据，请先分析'); return; }
+            let report = `📊 号码分析报告\n时间: ${new Date().toLocaleString()}\n总组数: ${currentGroups.length}\n`;
+            report += `\n🔺 三同号重复组合: ${Object.keys(currentTripleAnalysis).length}个\n`;
+            for (let [triple, data] of Object.entries(currentTripleAnalysis)) {
+                const idxStr = data.groups.map(i=>i+1).join(',');
+                report += `  [${triple}] 重复${data.groups.length}次 → 组: ${idxStr}\n`;
             }
-            
-            const totalMatches = Object.keys(analysis).length;
-            const maxRepeatLevel = Math.max(...Object.keys(analysis).map(k => analysis[k].groups.length));
-            const importantMatches = Object.values(analysis).filter(data => data.groups.length >= 3).length;
-            
-            let html = `
-                <div class="summary-cards">
-                    <div class="summary-card"><div class="summary-number">${groups.length}</div><div class="summary-label">总组数</div></div>
-                    <div class="summary-card ${totalMatches > 0 ? 'highlight' : ''}"><div class="summary-number">${totalMatches}</div><div class="summary-label">重复组合</div></div>
-                    <div class="summary-card ${maxRepeatLevel >= 3 ? 'highlight' : ''}"><div class="summary-number">${maxRepeatLevel}</div><div class="summary-label">最高重复</div></div>
-                    <div class="summary-card ${importantMatches > 0 ? 'highlight' : ''}"><div class="summary-number">${importantMatches}</div><div class="summary-label">重要重复</div></div>
-                </div>
-            `;
-            
-            const sortedAnalysis = Object.entries(analysis).sort((a, b) => b[1].groups.length - a[1].groups.length);
-            
-            html += `
-                <div class="repeat-section">
-                    <div class="section-header"><span>所有重复组合</span><span class="section-badge">${totalMatches}个组合</span></div>
-                    <div class="repeat-list">
-                        ${sortedAnalysis.map(([triple, data]) => {
-                            const level = Math.min(data.groups.length, 5);
-                            const levelColors = { 2: 'level-2', 3: 'level-3', 4: 'level-4', 5: 'level-5' };
-                            
-                            return `
-                                <div class="repeat-item">
-                                    <div class="triple-info">
-                                        <div class="triple-badge ${levelColors[level]}">${triple.split(',').join(' ')}</div>
-                                        <div class="repeat-count">重复 ${data.groups.length} 次</div>
-                                    </div>
-                                    <div class="groups-action">
-                                        <div class="groups-list">
-                                            ${data.groups.map(idx => `<span class="group-badge" onclick="jumpToGroup(${idx + 1}, '${triple}', ${level})">组${idx + 1}</span>`).join('')}
-                                        </div>
-                                        <button class="quick-view-btn" onclick="quickViewAllGroups('${triple}', ${level}, [${data.groups}])">只看这${data.groups.length}组</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `;
-            
-            container.innerHTML = html;
+            report += `\n🔄 双同号匹配 (交集=2): ${Object.keys(currentPairGroupedAnalysis).length}个号码组合\n`;
+            for (let [pairKey, data] of Object.entries(currentPairGroupedAnalysis)) {
+                const pairNums = data.numbers.join(',');
+                const pairsInfo = data.groupPairs.map(p => `(${p.groupA+1},${p.groupB+1})`).join(' ');
+                report += `  [${pairNums}] 出现在 ${data.repeatTimes} 个组对中 → ${pairsInfo}\n`;
+            }
+            navigator.clipboard.writeText(report).then(()=>alert('报告已复制')).catch(()=>alert('手动复制失败'));
         }
-        
-        // 复制结果
-        function shareResults() {
-            if (!currentData) { alert('请先分析数据！'); return; }
-            
-            let shareText = `号码分析报告\n分析时间: ${new Date().toLocaleString()}\n总组数: ${currentData.groups.length}组\n重复组合: ${Object.keys(currentData.analysis).length}个\n\n`;
-            
-            const sortedAnalysis = Object.entries(currentData.analysis).sort((a, b) => b[1].groups.length - a[1].groups.length);
-            sortedAnalysis.forEach(([triple, data]) => {
-                const groupText = data.groups.map(g => g + 1).join(', ');
-                shareText += `重复${data.groups.length}次: ${triple}\n出现在组: ${groupText}\n\n`;
-            });
-            
-            copyToClipboard(shareText);
-            alert('分析结果已复制到剪贴板！');
-        }
-        
-        // 复制到剪贴板
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                console.log('复制成功');
-            }).catch(() => {
-                const textArea = document.createElement('textarea');
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-            });
-        }
-        
-        // 快捷功能
-        function clearInput() { document.getElementById('pasteInput').value = ''; }
-        
         function fillExample() {
-            const example = `3 7 12 19 28 45
+            pasteInput.value = `3 7 12 19 28 45
 5 9 14 19 33 49
 2 12 19 25 28 37
 8 15 22 30 41 45
 1 7 14 23 33 46
 4 12 19 28 39 42
 6 11 20 31 37 44
-10 16 24 32 40 48`;
-            document.getElementById('pasteInput').value = example;
+10 16 24 32 40 48
+12 19 28 30 35 40
+7 14 23 28 33 46`;
         }
-        
-        // 页面加载完成
-        window.addEventListener('load', function() { 
-            console.log('📱 手机版号码分析工具已加载');
-            console.log('🚀 自动保存功能已启用 - 分析完成后自动保存到服务器');
-            console.log('🔗 Supabase URL:', SUPABASE_URL);
+        analyzeBtn.addEventListener('click', performAnalysis);
+        copyBtn.addEventListener('click', copyReport);
+        clearInputBtn.addEventListener('click', () => pasteInput.value = '');
+        exampleBtn.addEventListener('click', fillExample);
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const tab = btn.dataset.tab;
+                if (tab) switchTab(tab);
+            });
         });
-    </script>
+        console.log("微信专版已加载，支持三同号/双同号聚合统计");
+    })();
+</script>
 </body>
 </html>
-
